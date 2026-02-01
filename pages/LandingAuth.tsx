@@ -46,7 +46,7 @@ export const LandingPage: React.FC = () => {
           {/* Header */}
           <header className="flex justify-between items-center px-6 py-4 bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
             <div className="flex items-center gap-2">
-               <div className="bg-gradient-to-tr from-emerald-600 to-teal-400 w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-emerald-200">G</div>
+               <img src="https://files.catbox.moe/mmesk9.jpg" alt="Logo" className="w-9 h-9 rounded-xl shadow-lg shadow-emerald-200 object-cover" />
                <h1 className="text-lg font-bold text-gray-800 tracking-tight">{settings.companyName}</h1>
             </div>
             <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-600 p-2 hover:bg-gray-100 rounded-full transition">

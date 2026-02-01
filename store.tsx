@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Task, TaskSubmission, Withdrawal, Ticket, Settings, UserStatus } from './types';
 
 interface StoreContextType {
@@ -36,7 +36,7 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 // --- INITIAL MOCK DATA ---
 
 const INITIAL_SETTINGS: Settings = {
-  companyName: "Gold Product Sell",
+  companyName: "udyanit.com",
   notice: "আমাদের অ্যাপে স্বাগতম! রেফার করে এবং টাস্ক কমপ্লিট করে আনলিমিটেড ইনকাম করুন।",
   landingText: "বিশ্বস্ত ইনকাম সোর্স, ১০০% পেমেন্ট গ্যারান্টি।",
   youtubeLink: "https://youtube.com",
@@ -116,14 +116,37 @@ const MOCK_TASKS: Task[] = [
 ];
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  // Initialize from LocalStorage to prevent data loss on refresh
+  const [users, setUsers] = useState<User[]>(() => {
+    try {
+      const savedUsers = localStorage.getItem('app_users');
+      return savedUsers ? JSON.parse(savedUsers) : MOCK_USERS;
+    } catch (e) {
+      return MOCK_USERS;
+    }
+  });
+
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    try {
+      const savedUser = localStorage.getItem('app_currentUser');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
   const [isAdmin, setIsAdmin] = useState(false);
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
   const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
   const [submissions, setSubmissions] = useState<TaskSubmission[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [settings, setSettings] = useState<Settings>(INITIAL_SETTINGS);
+
+  // Helper to save users to LS
+  const saveUsers = (newUsers: User[]) => {
+    setUsers(newUsers);
+    localStorage.setItem('app_users', JSON.stringify(newUsers));
+  };
 
   const login = async (phone: string, pass: string) => {
     const user = users.find(u => u.phone === phone && u.password === pass);
@@ -133,6 +156,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return false;
       }
       setCurrentUser(user);
+      localStorage.setItem('app_currentUser', JSON.stringify(user));
       return true;
     }
     return false;
@@ -173,7 +197,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       refCode: 'REF' + Math.floor(1000 + Math.random() * 9000)
     };
 
-    setUsers([...users, newUser]);
+    let updatedUsers = [...users, newUser];
     
     // Give Bonus to Upline (Simulated)
     const upline = users.find(u => u.refCode === data.refCode);
@@ -183,22 +207,28 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         balanceFree: upline.balanceFree + settings.refBonus,
         refBonusReceived: upline.refBonusReceived + settings.refBonus
       };
-      setUsers(prev => prev.map(u => u.id === upline.id ? updatedUpline : u));
+      updatedUsers = updatedUsers.map(u => u.id === upline.id ? updatedUpline : u);
     }
 
+    saveUsers(updatedUsers);
     setCurrentUser(newUser);
+    localStorage.setItem('app_currentUser', JSON.stringify(newUser));
     return true;
   };
 
   const logout = () => {
     setCurrentUser(null);
     setIsAdmin(false);
+    localStorage.removeItem('app_currentUser');
   };
 
   const updateUser = (updatedUser: User) => {
-    setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+    const newUsers = users.map(u => u.id === updatedUser.id ? updatedUser : u);
+    saveUsers(newUsers);
+    
     if (currentUser?.id === updatedUser.id) {
       setCurrentUser(updatedUser);
+      localStorage.setItem('app_currentUser', JSON.stringify(updatedUser));
     }
   };
 
@@ -206,14 +236,23 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const user = users.find(u => u.id === userId);
     if (user) {
       const updated = { ...user, status: UserStatus.PREMIUM };
-      updateUser(updated);
       
       // Bonus logic could go here
+      let newUsers = users.map(u => u.id === userId ? updated : u);
+
       const upline = users.find(u => u.refCode === user.uplineCode);
       if(upline) {
           // Give premium ref bonus
           const updatedUpline = { ...upline, balancePremium: upline.balancePremium + 100 }; // Example amount
-          setUsers(prev => prev.map(u => u.id === upline.id ? updatedUpline : u));
+          newUsers = newUsers.map(u => u.id === upline.id ? updatedUpline : u);
+      }
+      
+      saveUsers(newUsers);
+      
+      // Sync current user if it's them
+      if (currentUser?.id === userId) {
+          setCurrentUser(updated);
+          localStorage.setItem('app_currentUser', JSON.stringify(updated));
       }
     }
   };

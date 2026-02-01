@@ -15,6 +15,7 @@ import { UserStatus, Task } from '../types';
 const UserLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentUser } = useStore();
   const activeTab = location.pathname.split('/')[2] || 'home';
 
   const navItems = [
@@ -52,6 +53,10 @@ export const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   
+  useEffect(() => {
+    if (!currentUser) navigate('/login');
+  }, [currentUser, navigate]);
+
   if (!currentUser) return null;
 
   return (
@@ -82,12 +87,15 @@ export const UserDashboard: React.FC = () => {
       <header className="bg-white text-gray-800 p-6 pt-8 pb-4 sticky top-0 z-40 border-b border-gray-100">
         <div className="flex justify-between items-center">
            <div className="flex items-center gap-3">
-             <button onClick={() => setIsDrawerOpen(true)} className="bg-gray-50 p-2.5 rounded-xl hover:bg-gray-100 transition">
+             <button onClick={() => setIsDrawerOpen(true)} className="bg-gray-50 p-2.5 rounded-xl hover:bg-gray-100 transition z-50 relative">
                 <Menu size={24} className="text-gray-700"/>
              </button>
-             <div>
-               <h2 className="font-extrabold text-lg leading-none">Hi, {currentUser.name.split(' ')[0]}</h2>
-               <span className="text-xs text-gray-400 font-medium">{currentUser.status} Member</span>
+             <div className="flex items-center gap-2">
+                 <img src="https://files.catbox.moe/mmesk9.jpg" alt="Logo" className="w-8 h-8 rounded-full object-cover shadow-sm"/>
+                 <div>
+                   <h2 className="font-extrabold text-lg leading-none">Hi, {currentUser.name.split(' ')[0]}</h2>
+                   <span className="text-xs text-gray-400 font-medium">{currentUser.status} Member</span>
+                 </div>
              </div>
            </div>
            <div className="flex gap-3">
@@ -108,7 +116,7 @@ export const UserDashboard: React.FC = () => {
                     <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Total Balance</p>
                     <h3 className="text-3xl font-black mt-1">৳{currentUser.balanceFree + currentUser.balancePremium}</h3>
                 </div>
-                <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm cursor-pointer" onClick={() => navigate('/user/wallet')}>
+                <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm cursor-pointer z-10" onClick={() => navigate('/user/wallet')}>
                     <Wallet size={20} className="text-white"/>
                 </div>
             </div>
@@ -147,7 +155,7 @@ export const UserDashboard: React.FC = () => {
             { label: 'Wallet', icon: Wallet, color: 'text-emerald-500', bg: 'bg-emerald-50', link: '/user/wallet' },
             { label: 'Premium', icon: Crown, color: 'text-yellow-500', bg: 'bg-yellow-50', link: '/user/premium' },
         ].map((item, idx) => (
-            <div key={idx} onClick={() => navigate(item.link)} className="flex flex-col items-center gap-2 cursor-pointer group">
+            <div key={idx} onClick={() => navigate(item.link)} className="flex flex-col items-center gap-2 cursor-pointer group z-10">
                 <div className={`${item.bg} p-4 rounded-2xl ${item.color} shadow-sm group-active:scale-95 transition-all duration-200 border border-gray-50`}>
                     <item.icon size={22} strokeWidth={2.5}/>
                 </div>
@@ -192,12 +200,16 @@ export const UserProfilePage: React.FC = () => {
     const { currentUser, logout } = useStore();
     const navigate = useNavigate();
 
+    useEffect(() => {
+        if (!currentUser) navigate('/login');
+    }, [currentUser, navigate]);
+
     if (!currentUser) return null;
 
     return (
         <UserLayout>
             <div className="bg-white sticky top-0 z-40 p-4 border-b border-gray-100 flex items-center gap-3">
-                <button onClick={() => navigate(-1)} className="p-2 bg-gray-50 rounded-full"><ArrowLeft size={20}/></button>
+                <button onClick={() => navigate('/user/home')} className="p-2 bg-gray-50 rounded-full hover:bg-gray-100 transition z-50"><ArrowLeft size={20}/></button>
                 <h1 className="font-bold text-lg">My Profile</h1>
             </div>
 
@@ -242,7 +254,7 @@ export const UserProfilePage: React.FC = () => {
                          </button>
                     </div>
 
-                     <button onClick={logout} className="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 mt-4">
+                     <button onClick={logout} className="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 mt-4 active:bg-red-100 transition">
                         <LogOut size={18}/> Sign Out
                      </button>
                 </div>
@@ -259,6 +271,12 @@ export const WalletPage: React.FC = () => {
   const [number, setNumber] = useState('');
   const [method, setMethod] = useState('BKASH');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!currentUser) navigate('/login');
+  }, [currentUser, navigate]);
+
+  if (!currentUser) return null;
 
   const handleWithdraw = () => {
       requestWithdraw({
@@ -279,7 +297,7 @@ export const WalletPage: React.FC = () => {
     <UserLayout>
        <div className="p-6 bg-gray-900 text-white rounded-b-3xl shadow-lg mb-6">
          <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => navigate(-1)} className="bg-white/10 p-2 rounded-full"><ArrowLeft size={20}/></button>
+            <button onClick={() => navigate('/user/home')} className="bg-white/10 p-2 rounded-full hover:bg-white/20 transition z-50"><ArrowLeft size={20}/></button>
             <h1 className="text-xl font-bold">My Wallet</h1>
          </div>
          
@@ -331,7 +349,7 @@ export const WalletPage: React.FC = () => {
                        </div>
                    )}
                    
-                   <button onClick={handleWithdraw} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-emerald-200 mt-2 active:scale-95 transition">Confirm Withdrawal</button>
+                   <button onClick={handleWithdraw} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold shadow-xl shadow-emerald-200 mt-2 active:scale-95 transition z-10">Confirm Withdrawal</button>
                </div>
           </motion.div>
        </div>
@@ -342,10 +360,18 @@ export const WalletPage: React.FC = () => {
 // Free Job Main Page
 export const FreeJobPage: React.FC = () => {
   const navigate = useNavigate();
+  const { currentUser } = useStore();
+
+  useEffect(() => {
+    if (!currentUser) navigate('/login');
+  }, [currentUser, navigate]);
+
+  if (!currentUser) return null;
+
   return (
     <div className="min-h-screen bg-slate-50 max-w-md mx-auto">
        <div className="bg-white p-4 shadow-sm flex items-center gap-4 sticky top-0 z-40">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={24} className="text-gray-700"/></button>
+          <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full z-50"><ArrowLeft size={24} className="text-gray-700"/></button>
           <h1 className="font-bold text-lg text-gray-800">Task Center</h1>
        </div>
        
@@ -356,7 +382,7 @@ export const FreeJobPage: React.FC = () => {
               { title: 'Gmail Sale', subtitle: 'Sell verified accounts', icon: Mail, color: 'text-orange-500', bg: 'bg-orange-50', action: 'Sell', link: '#' },
               { title: 'Ref Quiz', subtitle: 'Math quiz & bonus', icon: Gift, color: 'text-purple-500', bg: 'bg-purple-50', action: 'Play', link: '/user/quiz' },
           ].map((item, idx) => (
-            <div key={idx} onClick={() => item.link !== '#' && navigate(item.link)} className="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition border border-gray-100">
+            <div key={idx} onClick={() => item.link !== '#' && navigate(item.link)} className="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition border border-gray-100 z-10">
                 <div className="flex items-center gap-4">
                     <div className={`${item.bg} p-3 rounded-xl ${item.color}`}>
                         <item.icon size={24}/>
@@ -390,6 +416,12 @@ export const TaskListPage: React.FC = () => {
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [proof, setProof] = useState('');
 
+    useEffect(() => {
+        if (!currentUser) navigate('/login');
+    }, [currentUser, navigate]);
+
+    if (!currentUser) return null;
+
     const handleSubmit = () => {
         if(!selectedTask || !currentUser) return;
         submitTask({
@@ -409,7 +441,7 @@ export const TaskListPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-50 max-w-md mx-auto relative">
             <div className="bg-white p-4 shadow-sm flex items-center gap-4 sticky top-0 z-40">
-                <button onClick={() => navigate(-1)}><ArrowLeft/></button>
+                <button onClick={() => navigate('/user/free-job')} className="z-50 p-2 hover:bg-gray-100 rounded-full"><ArrowLeft/></button>
                 <h1 className="font-bold text-lg">Daily Tasks</h1>
             </div>
 
@@ -427,7 +459,7 @@ export const TaskListPage: React.FC = () => {
                                 <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg text-xs font-bold">৳{task.amount}</span>
                             </div>
                             <p className="text-gray-500 text-xs mb-4 line-clamp-2">{task.description}</p>
-                            <button onClick={() => setSelectedTask(task)} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm">Start Task</button>
+                            <button onClick={() => setSelectedTask(task)} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-sm z-10 relative">Start Task</button>
                         </div>
                     </div>
                 ))}
@@ -472,8 +504,14 @@ export const QuizPage: React.FC = () => {
     const [timer, setTimer] = useState(0);
 
     useEffect(() => {
+        if (!currentUser) navigate('/login');
+    }, [currentUser, navigate]);
+
+    useEffect(() => {
         setQ({ a: Math.floor(Math.random() * 20), b: Math.floor(Math.random() * 20) });
     }, []);
+
+    if (!currentUser) return null;
 
     const handleAnswer = () => {
         if (Number(ans) === q.a + q.b) {
@@ -485,7 +523,7 @@ export const QuizPage: React.FC = () => {
                 }
                 setTimer(0);
                 setAns('');
-                navigate(-1);
+                navigate('/user/home');
             }, 5000); 
         } else {
             alert("Wrong Answer!");
@@ -493,7 +531,8 @@ export const QuizPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white max-w-md mx-auto flex flex-col items-center justify-center p-6">
+        <div className="min-h-screen bg-white max-w-md mx-auto flex flex-col items-center justify-center p-6 relative">
+            <button onClick={() => navigate('/user/home')} className="absolute top-6 left-6 p-2 bg-gray-50 rounded-full z-50"><ArrowLeft size={20}/></button>
             <h2 className="text-2xl font-black text-gray-800 mb-8">Daily Quiz</h2>
             
             {timer > 0 ? (
@@ -505,7 +544,7 @@ export const QuizPage: React.FC = () => {
                 <div className="w-full bg-slate-50 p-8 rounded-[2rem] shadow-sm border border-gray-100 text-center">
                     <p className="text-4xl font-black text-gray-800 mb-8">{q.a} + {q.b} = ?</p>
                     <input type="number" value={ans} onChange={e => setAns(e.target.value)} className="w-full p-4 text-center text-2xl bg-white rounded-2xl mb-6 shadow-sm outline-none font-bold" placeholder="?" />
-                    <button onClick={handleAnswer} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-emerald-200">Submit</button>
+                    <button onClick={handleAnswer} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-emerald-200 z-10 relative">Submit</button>
                 </div>
             )}
         </div>
@@ -517,6 +556,12 @@ export const TeamPage: React.FC = () => {
     const { currentUser, users, settings } = useStore();
     const navigate = useNavigate();
 
+    useEffect(() => {
+        if (!currentUser) navigate('/login');
+    }, [currentUser, navigate]);
+
+    if (!currentUser) return null;
+
     const myReferrals = users.filter(u => u.uplineCode === currentUser?.refCode);
     const upline = users.find(u => u.refCode === currentUser?.uplineCode);
 
@@ -524,7 +569,7 @@ export const TeamPage: React.FC = () => {
         <UserLayout>
              <div className="bg-purple-600 text-white p-6 rounded-b-3xl mb-6 shadow-lg shadow-purple-200">
                 <div className="flex items-center gap-3 mb-6">
-                    <button onClick={() => navigate(-1)} className="bg-white/20 p-2 rounded-full"><ArrowLeft size={20}/></button>
+                    <button onClick={() => navigate('/user/home')} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition z-50"><ArrowLeft size={20}/></button>
                     <h1 className="text-xl font-bold">My Team</h1>
                 </div>
                 
@@ -586,10 +631,16 @@ export const PremiumPage: React.FC = () => {
     const { settings, currentUser } = useStore();
     const navigate = useNavigate();
 
+    useEffect(() => {
+        if (!currentUser) navigate('/login');
+    }, [currentUser, navigate]);
+
+    if (!currentUser) return null;
+
     return (
         <div className="min-h-screen bg-slate-50 max-w-md mx-auto">
             <div className="bg-yellow-500 p-4 text-white flex items-center gap-4 sticky top-0 shadow-md z-50">
-                <button onClick={() => navigate(-1)}><ArrowLeft/></button>
+                <button onClick={() => navigate('/user/home')} className="z-50 p-2 hover:bg-white/20 rounded-full transition"><ArrowLeft/></button>
                 <h1 className="font-bold text-lg">Premium Membership</h1>
             </div>
 
@@ -623,7 +674,7 @@ export const PremiumPage: React.FC = () => {
                             <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 text-center">
                                 <p className="text-xs font-bold text-gray-500 uppercase">Bkash Personal</p>
                                 <p className="text-xl font-mono text-gray-800 font-bold">{settings.contactNumber}</p>
-                                <button onClick={() => {navigator.clipboard.writeText(settings.contactNumber); alert("Copied")}} className="text-xs text-emerald-600 mt-1 font-bold underline">Tap to Copy</button>
+                                <button onClick={() => {navigator.clipboard.writeText(settings.contactNumber); alert("Copied")}} className="text-xs text-emerald-600 mt-1 font-bold underline z-10 relative">Tap to Copy</button>
                             </div>
                             
                             <h4 className="font-bold text-sm mt-4 text-gray-700">Submit Payment Details</h4>
@@ -633,7 +684,7 @@ export const PremiumPage: React.FC = () => {
                             </select>
                             <input type="text" placeholder="Sender Number" className="w-full p-4 bg-gray-50 rounded-2xl border-none outline-none font-mono text-sm"/>
                             <input type="text" placeholder="Transaction ID" className="w-full p-4 bg-gray-50 rounded-2xl border-none outline-none font-mono text-sm"/>
-                            <button className="w-full bg-yellow-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-yellow-200 hover:bg-yellow-600 transition transform active:scale-95 mt-4">Activate Account</button>
+                            <button className="w-full bg-yellow-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-yellow-200 hover:bg-yellow-600 transition transform active:scale-95 mt-4 z-10 relative">Activate Account</button>
                         </div>
                     </div>
                 )}
