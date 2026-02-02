@@ -1,13 +1,7 @@
 
-export enum UserRole {
-  USER = 'USER',
-  ADMIN = 'ADMIN'
-}
+export type UserRole = 'USER' | 'ADMIN';
 
-export enum UserStatus {
-  FREE = 'FREE',
-  PREMIUM = 'PREMIUM'
-}
+export type UserStatus = 'FREE' | 'PREMIUM';
 
 export interface User {
   id: string;

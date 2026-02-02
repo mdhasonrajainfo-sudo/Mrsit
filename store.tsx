@@ -96,7 +96,7 @@ const ADMIN_USER: User = {
     password: '123456',
     refCode: '123456', 
     uplineCode: '',
-    status: UserStatus.PREMIUM,
+    status: 'PREMIUM', // Changed from Enum
     balanceFree: 10000,
     balancePremium: 50000,
     joinDate: '2023-01-01',
@@ -219,7 +219,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       ...data,
       balanceFree: settings.regBonus,
       balancePremium: 0,
-      status: UserStatus.FREE,
+      status: 'FREE', // Changed from Enum
       joinDate: new Date().toISOString().split('T')[0],
       isBlocked: false,
       refBonusReceived: 0,
@@ -311,7 +311,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         const user = users.find(u => u.id === req.userId);
         if(user) {
-            const updatedUser = { ...user, status: UserStatus.PREMIUM };
+            const updatedUser = { ...user, status: 'PREMIUM' as UserStatus }; // Changed from Enum
             
             const upline = users.find(u => u.refCode === user.uplineCode);
             let newUsers = [...users];

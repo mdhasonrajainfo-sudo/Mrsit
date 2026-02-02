@@ -184,7 +184,7 @@ export const AdminDashboard: React.FC = () => {
   // Analytics Logic
   const stats = {
     totalUsers: users.length,
-    premiumUsers: users.filter(u => u.status === UserStatus.PREMIUM).length,
+    premiumUsers: users.filter(u => u.status === 'PREMIUM').length,
     pendingPremium: premiumRequests.filter(p => p.status === 'PENDING').length,
     pendingTasks: submissions.filter(s => s.status === 'PENDING').length,
     pendingJobWithdraw: jobWithdrawals.filter(j => j.status === 'PENDING').length,
