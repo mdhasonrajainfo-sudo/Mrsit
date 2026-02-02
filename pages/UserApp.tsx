@@ -11,9 +11,9 @@ import {
   Facebook, Youtube, Menu, X, Phone, Edit, Shield, Eye, EyeOff, Send, MessageCircle,
   Headphones, Globe, Star, XCircle, FileText, Camera, Video, MonitorPlay, AlertTriangle, Lock, Image as ImageIcon,
   Gem, CreditCard, DollarSign, Calendar, TrendingUp, Activity, CheckSquare, Instagram, Loader, ShoppingBag, 
-  Key, UserCheck, AlertOctagon, AlertCircle
+  Key, UserCheck, AlertOctagon, AlertCircle, Link
 } from 'lucide-react';
-import { UserStatus, Task } from '../types';
+import { UserStatus, Task, TaskSubmission, Withdrawal } from '../types';
 
 // --- TOAST CONTEXT ---
 
@@ -160,8 +160,6 @@ const UserLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     </div>
   );
 };
-
-// --- COMPONENTS FOR PAGES ---
 
 // Dashboard
 export const UserDashboard: React.FC = () => {
@@ -372,578 +370,74 @@ export const UserDashboard: React.FC = () => {
   );
 };
 
-// --- RE-IMPLEMENTING FULL FREE JOB PAGE WITH TABS AS REQUESTED ---
-export const FreeJobPage: React.FC = () => {
-    const navigate = useNavigate();
-    const { currentUser, tasks, submitTask, settings, submissions } = useStore();
-    const { showToast } = useToast();
-    const [activeTab, setActiveTab] = useState<'TASKS' | 'GMAIL' | 'QUIZ' | 'INFO'>('TASKS');
-    const [proof, setProof] = useState('');
-    const [gmailData, setGmailData] = useState({email: '', pass: ''});
-    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-
-    const handleTaskSubmit = () => {
-        if(!selectedTask) return;
-        if(!proof) return showToast("Please provide proof", 'error');
-        
-        // Check Daily Limit
-        const todaySubs = submissions.filter(s => s.userId === currentUser?.id && s.date === new Date().toISOString().split('T')[0] && tasks.find(t => t.id === s.taskId)?.type === 'FREE');
-        if (todaySubs.length >= settings.dailyFreeTaskLimit) return showToast("Daily Free Task Limit Reached", 'error');
-
-        submitTask({
-            id: Date.now().toString(),
-            taskId: selectedTask.id,
-            userId: currentUser!.id,
-            proofLink: proof,
-            details: 'Task Completed',
-            status: 'PENDING',
-            date: new Date().toISOString().split('T')[0],
-            amount: selectedTask.amount,
-            taskTitle: selectedTask.title,
-            category: selectedTask.category
-        });
-        showToast("Task Submitted Successfully!", 'success');
-        setSelectedTask(null);
-        setProof('');
-    };
-
-    const handleGmailSubmit = () => {
-        if(!gmailData.email || !gmailData.pass) return showToast("Fill all fields", 'error');
-        submitTask({
-            id: Date.now().toString(),
-            taskId: 'gmail-sell',
-            userId: currentUser!.id,
-            proofLink: `${gmailData.email} | ${gmailData.pass}`,
-            details: 'Gmail Sold',
-            status: 'PENDING',
-            date: new Date().toISOString().split('T')[0],
-            amount: settings.gmailRate, 
-            taskTitle: 'Gmail Sell',
-            category: 'GMAIL'
-        });
-        showToast("Gmail Submitted for Review", 'success');
-        setGmailData({email: '', pass: ''});
-    }
-
-    return (
-        <UserLayout>
-           <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
-                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
-                <h1 className="text-lg font-bold text-gray-800">Free Job Area</h1>
-            </div>
-
-           <div className="px-5 mt-4">
-              <div className="bg-emerald-600 text-white rounded-2xl shadow-lg p-5 flex items-center justify-between relative overflow-hidden">
-                  <div className="z-10">
-                      <p className="text-[10px] text-emerald-100 font-bold uppercase">Total Free Income</p>
-                      <p className="text-2xl font-black">৳{currentUser?.totalIncome}</p>
-                  </div>
-                  <div className="text-right z-10">
-                      <p className="text-[10px] text-emerald-100 font-bold uppercase">Today Income</p>
-                      <p className="text-2xl font-black">৳{currentUser?.todayIncome}</p>
-                  </div>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-              </div>
-           </div>
-
-           <div className="grid grid-cols-4 gap-2 px-5 mt-6">
-               <button onClick={() => setActiveTab('TASKS')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition ${activeTab === 'TASKS' ? 'bg-emerald-50 border border-emerald-200 shadow-sm' : 'bg-white border border-gray-100'}`}>
-                   <div className={`${activeTab === 'TASKS' ? 'text-emerald-600' : 'text-gray-400'}`}><CheckSquare size={20}/></div>
-                   <span className={`text-[10px] font-bold ${activeTab === 'TASKS' ? 'text-emerald-700' : 'text-gray-500'}`}>Task</span>
-               </button>
-               <button onClick={() => setActiveTab('GMAIL')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition ${activeTab === 'GMAIL' ? 'bg-orange-50 border border-orange-200 shadow-sm' : 'bg-white border border-gray-100'}`}>
-                   <div className={`${activeTab === 'GMAIL' ? 'text-orange-600' : 'text-gray-400'}`}><Mail size={20}/></div>
-                   <span className={`text-[10px] font-bold ${activeTab === 'GMAIL' ? 'text-orange-700' : 'text-gray-500'}`}>Gmail</span>
-               </button>
-               <button onClick={() => setActiveTab('QUIZ')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition ${activeTab === 'QUIZ' ? 'bg-purple-50 border border-purple-200 shadow-sm' : 'bg-white border border-gray-100'}`}>
-                   <div className={`${activeTab === 'QUIZ' ? 'text-purple-600' : 'text-gray-400'}`}><Gift size={20}/></div>
-                   <span className={`text-[10px] font-bold ${activeTab === 'QUIZ' ? 'text-purple-700' : 'text-gray-500'}`}>Quiz</span>
-               </button>
-               <button onClick={() => setActiveTab('INFO')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition ${activeTab === 'INFO' ? 'bg-blue-50 border border-blue-200 shadow-sm' : 'bg-white border border-gray-100'}`}>
-                   <div className={`${activeTab === 'INFO' ? 'text-blue-600' : 'text-gray-400'}`}><HelpCircle size={20}/></div>
-                   <span className={`text-[10px] font-bold ${activeTab === 'INFO' ? 'text-blue-700' : 'text-gray-500'}`}>Limit</span>
-               </button>
-           </div>
-
-           <div className="px-5 mt-6 pb-20">
-               {activeTab === 'TASKS' && (
-                   <div className="space-y-4">
-                       <h3 className="font-bold text-sm text-slate-700 border-l-4 border-emerald-500 pl-2">Available Tasks</h3>
-                       {tasks.filter(t => t.type === 'FREE').map(task => (
-                           <div key={task.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col gap-2">
-                               <div className="flex justify-between items-start">
-                                   <div className="flex items-center gap-3">
-                                       <img src={task.image} className="w-10 h-10 rounded-lg bg-gray-100 object-cover"/>
-                                       <div>
-                                            <h4 className="font-bold text-slate-800 text-sm">{task.title}</h4>
-                                            <span className="text-emerald-600 text-xs font-bold">Reward: ৳{task.amount}</span>
-                                       </div>
-                                   </div>
-                                   <span className="bg-gray-100 px-2 py-1 rounded text-[10px] font-bold text-gray-500">{task.category}</span>
-                               </div>
-                               <p className="text-xs text-gray-500">{task.description}</p>
-                               <button onClick={() => setSelectedTask(task)} className="w-full bg-emerald-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-sm hover:bg-emerald-700 transition">Start Task</button>
-                           </div>
-                       ))}
-                       {tasks.filter(t => t.type === 'FREE').length === 0 && (
-                           <div className="text-center py-10">
-                               <div className="bg-gray-50 inline-block p-4 rounded-full mb-3"><Briefcase size={24} className="text-gray-400"/></div>
-                               <p className="text-gray-500 text-sm font-medium">No tasks available right now.</p>
-                           </div>
-                       )}
-                   </div>
-               )}
-
-                {activeTab === 'GMAIL' && (
-                    <div className="space-y-4">
-                        <div className="bg-orange-50 p-4 rounded-xl text-center border border-orange-100">
-                            <Mail size={32} className="text-orange-500 mx-auto mb-2"/>
-                            <h3 className="font-bold text-orange-800">Sell Gmail Accounts</h3>
-                            <p className="text-xs text-orange-600 mt-1">Rate: ৳{settings.gmailRate} per verified mail</p>
-                        </div>
-                        <div className="space-y-3 bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Gmail Address</label>
-                                <input type="text" placeholder="example@gmail.com" value={gmailData.email} onChange={e => setGmailData({...gmailData, email: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl text-sm border-none outline-none text-slate-900 mt-1"/>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Password</label>
-                                <input type="text" placeholder="Password123" value={gmailData.pass} onChange={e => setGmailData({...gmailData, pass: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl text-sm border-none outline-none text-slate-900 mt-1"/>
-                            </div>
-                            <button onClick={handleGmailSubmit} className="w-full bg-orange-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-orange-200 mt-2">Submit for Review</button>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'QUIZ' && (
-                    <div className="bg-purple-50 p-6 rounded-2xl text-center border border-purple-100">
-                        <Gift size={40} className="text-purple-500 mx-auto mb-4"/>
-                        <h3 className="font-bold text-slate-800">Referral Quiz</h3>
-                        <p className="text-xs text-gray-500 mb-6">Earn Quizzes by referring friends. 2 Quizzes per invite!</p>
-                        <div className="bg-white p-3 rounded-xl mb-4 inline-block shadow-sm">
-                            <span className="text-sm font-bold text-purple-600">Available: {currentUser?.quizBalance || 0}</span>
-                        </div>
-                        <button onClick={() => {
-                            if ((currentUser?.quizBalance || 0) <= 0) return showToast("You have no quizzes left!", 'error');
-                            navigate('/user/quiz');
-                        }} className="block w-full bg-purple-600 text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-purple-200">Start Quiz</button>
-                    </div>
-                )}
-                
-                {activeTab === 'INFO' && (
-                    <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100">
-                        <h3 className="font-bold text-blue-800 mb-3 flex items-center gap-2"><AlertCircle size={18}/> Daily Limits</h3>
-                        <div className="space-y-2 text-sm text-blue-700">
-                            <div className="flex justify-between bg-white/50 p-2 rounded-lg">
-                                <span>Free Tasks:</span>
-                                <span className="font-bold">{settings.dailyFreeTaskLimit} / day</span>
-                            </div>
-                            <div className="flex justify-between bg-white/50 p-2 rounded-lg">
-                                <span>Premium Tasks:</span>
-                                <span className="font-bold">{settings.dailyPremiumTaskLimit} / day</span>
-                            </div>
-                            <div className="flex justify-between bg-white/50 p-2 rounded-lg">
-                                <span>Gmail Sell:</span>
-                                <span className="font-bold">Unlimited</span>
-                            </div>
-                        </div>
-                    </div>
-                )}
-           </div>
-
-           <AnimatePresence>
-                {selectedTask && (
-                    <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} className="fixed inset-0 bg-white z-[60] overflow-y-auto">
-                        <div className="p-5">
-                            <button onClick={() => setSelectedTask(null)} className="mb-4 bg-gray-100 p-2 rounded-full"><ArrowLeft className="text-slate-800"/></button>
-                            <h2 className="text-xl font-bold mb-2 text-slate-800">{selectedTask.title}</h2>
-                            <div className="bg-emerald-50 p-4 rounded-xl text-xs text-emerald-800 mb-6 border border-emerald-100">
-                                {selectedTask.description}
-                            </div>
-                            <a href={selectedTask.link} target="_blank" rel="noreferrer" className="block w-full bg-blue-600 text-white text-center py-4 rounded-2xl font-bold mb-6 shadow-lg">Go To Link</a>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Proof Submission</label>
-                                    <input type="text" placeholder="Enter Proof Link / Screenshot URL" value={proof} onChange={e => setProof(e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl border-none outline-none font-medium text-sm text-gray-900 mt-1 bg-gray-100" />
-                                </div>
-                                <button onClick={handleTaskSubmit} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg">Submit Proof</button>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-           </AnimatePresence>
-        </UserLayout>
-    );
-};
-
-// --- RESTORED PROFILE PAGE WITH ADMIN LOGIN ---
-export const UserProfilePage: React.FC = () => {
-  const { currentUser, logout, updateUser, adminLogin, settings } = useStore();
-  const navigate = useNavigate();
-  const { showToast } = useToast();
-  const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({ name: currentUser?.name || '', password: currentUser?.password || '', profilePic: currentUser?.profilePic || '' });
-  const [showPolicy, setShowPolicy] = useState(false);
-
-  if (!currentUser) return null;
-
-  const handleUpdate = () => {
-      updateUser({ ...currentUser, ...formData });
-      setEditing(false);
-      showToast("Profile Updated", 'success');
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files[0]) {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-              if(ev.target?.result) {
-                  const newPic = ev.target.result as string;
-                  setFormData(prev => ({...prev, profilePic: newPic}));
-                  // Auto save image
-                  updateUser({...currentUser, profilePic: newPic});
-                  showToast("Photo Updated", 'success');
-              }
-          };
-          reader.readAsDataURL(e.target.files[0]);
-      }
-  };
-
-  // Specific Admin Login Handler
-  const handleAdminLogin = () => {
-      if(currentUser.phone === '01772209016') {
-          // For profile quick link, we bypass secondary auth assuming they already logged in or let them re-verify
-          // But as per user request "admin login option will be there", we redirect to login to do the 2-step
-          navigate('/login'); 
-      } else {
-          showToast("You are not an Admin", 'error');
-      }
-  }
-
-  return (
-    <UserLayout>
-        <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
-            <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
-            <h1 className="text-lg font-bold text-gray-800">My Profile</h1>
-        </div>
-        
-        <div className="p-5 space-y-6 pb-24">
-             {/* Profile Header Card */}
-             <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 text-center relative overflow-hidden">
-                 <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-emerald-50 to-transparent z-0"></div>
-                 <div className="relative z-10">
-                     <div className="relative w-24 h-24 mx-auto mb-4">
-                        <div className="w-24 h-24 bg-white rounded-full overflow-hidden border-4 border-emerald-100 shadow-md">
-                            <img src={formData.profilePic || `https://ui-avatars.com/api/?name=${currentUser.name}&background=059669&color=fff`} className="w-full h-full object-cover"/>
-                        </div>
-                        <label className="absolute bottom-0 right-0 bg-slate-900 p-2 rounded-full text-white cursor-pointer shadow-lg hover:scale-110 transition">
-                            <Camera size={14}/>
-                            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden"/>
-                        </label>
-                     </div>
-                     
-                     {!editing ? (
-                         <>
-                            <h2 className="text-2xl font-black text-slate-800 flex justify-center items-center gap-2">
-                                {currentUser.name} 
-                                {currentUser.status === 'PREMIUM' && <div className="bg-yellow-100 p-1 rounded-full"><CheckCircle size={16} className="text-yellow-600 fill-yellow-100"/></div>}
-                            </h2>
-                            <p className="text-sm text-gray-500 font-medium mb-4">{currentUser.phone}</p>
-                            
-                            <div className="flex justify-center gap-3">
-                                <div className="bg-emerald-50 px-4 py-2 rounded-xl text-center">
-                                    <p className="text-[10px] font-bold text-emerald-600 uppercase">Balance</p>
-                                    <p className="font-black text-slate-800">৳{currentUser.balanceFree + currentUser.balancePremium}</p>
-                                </div>
-                                <div className="bg-purple-50 px-4 py-2 rounded-xl text-center">
-                                    <p className="text-[10px] font-bold text-purple-600 uppercase">Income</p>
-                                    <p className="font-black text-slate-800">৳{currentUser.totalIncome}</p>
-                                </div>
-                            </div>
-
-                            <button onClick={() => setEditing(true)} className="mt-6 text-emerald-600 text-xs font-bold flex items-center justify-center gap-1 mx-auto bg-emerald-50 px-4 py-2 rounded-lg hover:bg-emerald-100 transition"><Edit size={12}/> Edit Details</button>
-                         </>
-                     ) : (
-                         <div className="space-y-3 mt-4 text-left">
-                             <div>
-                                 <label className="text-xs font-bold text-gray-400 ml-1">Name</label>
-                                 <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-3 border rounded-xl text-sm outline-none text-slate-900 bg-gray-50" placeholder="Name"/>
-                             </div>
-                             <div>
-                                 <label className="text-xs font-bold text-gray-400 ml-1">Password</label>
-                                 <input type="text" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="w-full p-3 border rounded-xl text-sm outline-none text-slate-900 bg-gray-50" placeholder="Password"/>
-                             </div>
-                             <div className="flex gap-2 mt-4">
-                                 <button onClick={() => setEditing(false)} className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-xl text-sm font-bold">Cancel</button>
-                                 <button onClick={handleUpdate} className="flex-1 bg-emerald-600 text-white py-2 rounded-xl text-sm font-bold shadow-lg">Save</button>
-                             </div>
-                         </div>
-                     )}
-                 </div>
-             </div>
-
-             {/* Menu List */}
-             <div className="space-y-3">
-                 {/* Only show Admin Login if user matches */}
-                 {currentUser.phone === '01772209016' && (
-                     <button onClick={handleAdminLogin} className="w-full bg-slate-900 text-white p-4 rounded-2xl flex items-center justify-between shadow-lg shadow-slate-200 hover:scale-[1.02] transition">
-                         <div className="flex items-center gap-3"><Shield size={20} className="text-emerald-400"/> <span className="font-bold">Admin Panel Login</span></div>
-                         <ChevronRight size={18} className="text-slate-500"/>
-                     </button>
-                 )}
-                 
-                 <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-                     <button onClick={() => navigate('/user/income-history')} className="w-full p-4 flex items-center justify-between hover:bg-gray-50 border-b border-gray-50">
-                         <div className="flex items-center gap-3"><List size={18} className="text-blue-500"/> <span className="text-sm font-bold text-gray-700">Income History</span></div>
-                         <ChevronRight size={16} className="text-gray-300"/>
-                     </button>
-                     <button onClick={() => navigate('/user/wallet')} className="w-full p-4 flex items-center justify-between hover:bg-gray-50 border-b border-gray-50">
-                         <div className="flex items-center gap-3"><Wallet size={18} className="text-emerald-500"/> <span className="text-sm font-bold text-gray-700">Withdraw Funds</span></div>
-                         <ChevronRight size={16} className="text-gray-300"/>
-                     </button>
-                     <button onClick={() => navigate('/user/team')} className="w-full p-4 flex items-center justify-between hover:bg-gray-50 border-b border-gray-50">
-                         <div className="flex items-center gap-3"><Users size={18} className="text-purple-500"/> <span className="text-sm font-bold text-gray-700">My Team</span></div>
-                         <ChevronRight size={16} className="text-gray-300"/>
-                     </button>
-                     <button onClick={() => setShowPolicy(!showPolicy)} className="w-full p-4 flex items-center justify-between hover:bg-gray-50 border-b border-gray-50">
-                         <div className="flex items-center gap-3"><FileText size={18} className="text-orange-500"/> <span className="text-sm font-bold text-gray-700">Privacy Policy</span></div>
-                         <ChevronRight size={16} className={`text-gray-300 transition ${showPolicy ? 'rotate-90' : ''}`}/>
-                     </button>
-                     {showPolicy && (
-                         <div className="p-5 text-xs text-gray-500 bg-gray-50 leading-relaxed border-b border-gray-50 whitespace-pre-wrap">
-                             {settings.privacyPolicy}
-                         </div>
-                     )}
-                     <button onClick={logout} className="w-full p-4 flex items-center justify-between hover:bg-red-50 group">
-                         <div className="flex items-center gap-3"><LogOut size={18} className="text-red-500"/> <span className="text-sm font-bold text-red-600">Logout Account</span></div>
-                     </button>
-                 </div>
-             </div>
-             
-             <div className="text-center text-[10px] text-gray-400 pt-4">
-                 v2.5.0 • {settings.companyName}
-             </div>
-        </div>
-    </UserLayout>
-  );
-};
-
-// --- UPDATED PREMIUM PAGE WITH PENDING DETAILS ---
-export const PremiumPage: React.FC = () => {
-    const navigate = useNavigate();
-    const { settings, currentUser, premiumRequests } = useStore();
-    const { showToast } = useToast();
-    const [subPage, setSubPage] = useState<string | null>(null);
-
-    // Check Pending Status and Get Details
-    const pendingRequest = premiumRequests.find(r => r.userId === currentUser?.id && r.status === 'PENDING');
-
-    const handleFeatureClick = (feature: string) => {
-        if(currentUser?.status === 'FREE') {
-            showToast("This service is locked. Please Upgrade.", 'info');
-            return;
-        }
-        setSubPage(feature);
-    }
-
-    if (subPage) {
-        return <PremiumSubPage type={subPage} onClose={() => setSubPage(null)} />
-    }
-
-    return (
-        <UserLayout>
-            <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
-                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
-                <h1 className="text-lg font-bold text-gray-800">Premium Zone</h1>
-            </div>
-
-            <div className="p-5">
-                {/* Upgrade Section Logic */}
-                {currentUser?.status === 'FREE' ? (
-                    pendingRequest ? (
-                        <div className="w-full bg-orange-50 border border-orange-100 rounded-3xl p-6 mb-8 text-center relative overflow-hidden">
-                            <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-orange-600 animate-pulse">
-                                <Clock size={32}/>
-                            </div>
-                            <h2 className="text-lg font-black text-orange-900 mb-1">Request Under Review</h2>
-                            <p className="text-xs text-orange-700 mb-4">Please wait for admin approval (Max 24h)</p>
-                            
-                            <div className="bg-white p-4 rounded-xl text-left border border-orange-100 shadow-sm space-y-2">
-                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 border-b pb-1">Submission Details</p>
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-gray-500">Method:</span>
-                                    <span className="font-bold text-gray-800">{pendingRequest.method}</span>
-                                </div>
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-gray-500">Sender:</span>
-                                    <span className="font-bold text-gray-800 font-mono">{pendingRequest.senderNumber}</span>
-                                </div>
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-gray-500">TrxID:</span>
-                                    <span className="font-bold text-gray-800 font-mono">{pendingRequest.trxId}</span>
-                                </div>
-                                <div className="flex justify-between text-xs">
-                                    <span className="text-gray-500">Amount:</span>
-                                    <span className="font-bold text-emerald-600">৳{pendingRequest.amount}</span>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-3xl text-white mb-8 shadow-xl relative overflow-hidden">
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <div className="bg-yellow-500 p-1.5 rounded-lg"><Crown size={20} className="text-white"/></div>
-                                    <h3 className="font-bold text-lg">Become Premium</h3>
-                                </div>
-                                <p className="text-sm text-slate-300 mb-6 leading-relaxed">
-                                    Unlock higher earning tasks, instant withdrawals, and 24/7 priority support.
-                                </p>
-                                <ul className="space-y-3 mb-6">
-                                    {['Unlimited Daily Tasks', 'Double Referral Bonus', 'Instant Withdrawal', 'Premium Support'].map((item, i) => (
-                                        <li key={i} className="flex items-center gap-3 text-xs text-slate-200">
-                                            <div className="bg-emerald-500/20 p-1 rounded-full"><CheckCircle size={12} className="text-emerald-400"/></div> 
-                                            {item}
-                                        </li>
-                                    ))}
-                                </ul>
-                                <button onClick={() => navigate('/user/premium-form')} className="w-full bg-yellow-500 text-slate-900 py-3.5 rounded-xl font-bold shadow-lg shadow-yellow-500/20 hover:scale-[1.02] transition active:scale-95 flex items-center justify-center gap-2">
-                                    Upgrade for ৳{settings.premiumCost} <ArrowRight size={18}/>
-                                </button>
-                            </div>
-                            {/* Decorative Circles */}
-                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
-                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
-                        </div>
-                    )
-                ) : (
-                    <div className="w-full bg-emerald-50 text-emerald-800 py-6 rounded-3xl font-bold text-center mb-8 border border-emerald-100 flex flex-col items-center justify-center gap-2 shadow-sm">
-                        <div className="bg-white p-3 rounded-full shadow-md">
-                            <CheckCircle size={32} className="text-emerald-500 fill-emerald-100"/>
-                        </div>
-                        <span className="text-lg">Premium Verified</span>
-                        <p className="text-xs font-normal text-emerald-600">You have access to all features</p>
-                    </div>
-                )}
-
-                {/* Premium Services Grid */}
-                <h3 className="font-bold text-slate-700 mb-4 pl-3 border-l-4 border-yellow-500 uppercase tracking-wider text-sm">Premium Services</h3>
-                <div className="grid grid-cols-4 gap-3">
-                    {[
-                        { id: 'TASK', title: "Prem. Task", icon: Briefcase, color: "text-blue-600" },
-                        { id: 'FB', title: "FB Sell", icon: Facebook, color: "text-blue-800" },
-                        { id: 'GMAIL', title: "Gmail Sell", icon: Mail, color: "text-red-500" },
-                        { id: 'INSTA', title: "Insta Sell", icon: Instagram, color: "text-pink-600" },
-                        { id: 'TIKTOK', title: "TikTok Sell", icon: Video, color: "text-black" },
-                        { id: 'SUPPORT', title: "VIP Help", icon: Headphones, color: "text-emerald-600" },
-                        { id: 'SHOP', title: "Shop", icon: ShoppingBag, color: "text-teal-600" },
-                        { id: 'MORE', title: "More", icon: Globe, color: "text-indigo-600" },
-                    ].map((item, i) => (
-                        <div key={i} onClick={() => handleFeatureClick(item.id)} className={`flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition group ${currentUser?.status === 'FREE' ? 'opacity-60' : ''}`}>
-                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 w-full aspect-square flex items-center justify-center relative group-hover:border-emerald-200 transition">
-                                <item.icon size={24} className={item.color}/>
-                                {currentUser?.status === 'FREE' && <div className="absolute inset-0 bg-gray-50/50 flex items-center justify-center rounded-2xl"><Lock size={16} className="text-gray-400"/></div>}
-                            </div>
-                            <span className="text-[10px] font-bold text-gray-600 text-center leading-tight">{item.title}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </UserLayout>
-    );
-};
-
-// --- ADDITIONAL COMPONENTS ---
-
-export const PremiumSubPage: React.FC<{ type: string, onClose: () => void }> = ({ type, onClose }) => {
-    return (
-        <div className="min-h-screen bg-white">
-            <div className="p-4 flex items-center gap-3 border-b border-gray-100 shadow-sm sticky top-0 bg-white z-50">
-                <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
-                <h1 className="text-lg font-bold text-gray-800">{type === 'TASK' ? 'Premium Tasks' : 'Service Details'}</h1>
-            </div>
-            <div className="p-5 flex flex-col items-center justify-center min-h-[50vh] text-center">
-                 <div className="bg-emerald-50 p-4 rounded-full mb-4">
-                    <Shield size={48} className="text-emerald-500" />
-                 </div>
-                 <h2 className="text-xl font-bold text-gray-800">Coming Soon</h2>
-                 <p className="text-gray-500 mt-2 text-sm">This premium feature is under development.</p>
-            </div>
-        </div>
-    );
-};
-
-export const WalletPage: React.FC = () => {
-    const { currentUser, withdrawals, requestWithdraw } = useStore();
-    const navigate = useNavigate();
-    const [amount, setAmount] = useState('');
-    const [method, setMethod] = useState<'BKASH'|'NAGAD'|'ROCKET'>('BKASH');
-    const [number, setNumber] = useState('');
-    const { showToast } = useToast();
-
-    const handleWithdraw = () => {
-        const val = Number(amount);
-        if(!val || !number) return showToast("Invalid Details", 'error');
-        if(val < 100) return showToast("Min Withdraw 100", 'error');
-        if(currentUser && val > currentUser.balanceFree) return showToast("Insufficient Balance", 'error');
-
-        requestWithdraw({
-            id: Date.now().toString(),
-            userId: currentUser!.id,
-            amount: val,
-            method,
-            number,
-            type: 'FREE_WALLET',
-            status: 'PENDING',
-            date: new Date().toISOString().split('T')[0]
-        });
-        showToast("Request Sent", 'success');
-        setAmount('');
-        setNumber('');
-    };
-
-    return (
-        <UserLayout>
-            <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
-                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
-                <h1 className="text-lg font-bold text-gray-800">My Wallet</h1>
-            </div>
-            <div className="p-5">
-                <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl mb-6">
-                     <p className="text-xs text-slate-400 font-bold uppercase">Total Balance</p>
-                     <h2 className="text-3xl font-black mt-1">৳{currentUser ? currentUser.balanceFree + currentUser.balancePremium : 0}</h2>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 className="font-bold mb-4">Withdraw Request</h3>
-                    <div className="space-y-4">
-                        <select value={method} onChange={e => setMethod(e.target.value as any)} className="w-full p-3 border rounded-xl bg-gray-50">
-                            <option value="BKASH">Bkash</option>
-                            <option value="NAGAD">Nagad</option>
-                            <option value="ROCKET">Rocket</option>
-                        </select>
-                        <input type="number" placeholder="Amount (Min 100)" value={amount} onChange={e => setAmount(e.target.value)} className="w-full p-3 border rounded-xl bg-gray-50"/>
-                        <input type="text" placeholder="Wallet Number" value={number} onChange={e => setNumber(e.target.value)} className="w-full p-3 border rounded-xl bg-gray-50"/>
-                        <button onClick={handleWithdraw} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold">Submit Request</button>
-                    </div>
-                </div>
-            </div>
-        </UserLayout>
-    );
-};
-
 export const TeamPage: React.FC = () => {
     const { currentUser, users } = useStore();
     const navigate = useNavigate();
+    const { showToast } = useToast();
     const team = users.filter(u => u.uplineCode === currentUser?.refCode);
     
+    // Generate Invite Link
+    const inviteLink = `${window.location.origin}/#/register?ref=${currentUser?.refCode}`;
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        showToast("Copied to clipboard!", 'success');
+    };
+
+    const shareLink = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Join My Team',
+                    text: `Use my referral code ${currentUser?.refCode} to join!`,
+                    url: inviteLink,
+                });
+            } catch (err) {
+                console.log('Error sharing', err);
+            }
+        } else {
+            copyToClipboard(inviteLink);
+        }
+    };
+
     return (
         <UserLayout>
              <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
                 <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
                 <h1 className="text-lg font-bold text-gray-800">My Team</h1>
             </div>
-            <div className="p-5">
-                 <div className="grid grid-cols-2 gap-4 mb-6">
+            
+            <div className="p-5 space-y-6">
+                 {/* Referral Card */}
+                 <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+                     <div className="relative z-10">
+                         <h2 className="font-bold text-lg mb-1">Invite & Earn</h2>
+                         <p className="text-emerald-100 text-xs mb-4">Share your link and earn bonuses per active referral.</p>
+                         
+                         <div className="bg-white/10 p-3 rounded-xl border border-white/20 mb-3 flex justify-between items-center">
+                             <div>
+                                 <p className="text-[10px] text-emerald-200 uppercase font-bold">Your Code</p>
+                                 <p className="font-mono font-bold text-xl tracking-widest">{currentUser?.refCode}</p>
+                             </div>
+                             <button onClick={() => copyToClipboard(currentUser?.refCode || '')} className="bg-white text-emerald-600 p-2 rounded-lg hover:scale-105 transition">
+                                 <Copy size={18}/>
+                             </button>
+                         </div>
+
+                         <div className="flex gap-2">
+                             <button onClick={() => copyToClipboard(inviteLink)} className="flex-1 bg-white/20 border border-white/30 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-white/30 transition">
+                                 <Link size={14}/> Copy Link
+                             </button>
+                             <button onClick={shareLink} className="flex-1 bg-yellow-400 text-emerald-900 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg hover:scale-105 transition">
+                                 <Share2 size={14}/> Share Link
+                             </button>
+                         </div>
+                     </div>
+                     <div className="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+                 </div>
+
+                 {/* Stats */}
+                 <div className="grid grid-cols-2 gap-4">
                      <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 text-center">
                          <h3 className="text-2xl font-black text-purple-700">{team.length}</h3>
                          <p className="text-xs text-gray-500 font-bold uppercase">Total Members</p>
@@ -954,8 +448,9 @@ export const TeamPage: React.FC = () => {
                      </div>
                  </div>
 
-                 <h3 className="font-bold text-gray-800 mb-3">Member List</h3>
+                 {/* List */}
                  <div className="space-y-3">
+                     <h3 className="font-bold text-gray-800">Member List</h3>
                      {team.map(member => (
                          <div key={member.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                              <div className="flex items-center gap-3">
@@ -975,203 +470,279 @@ export const TeamPage: React.FC = () => {
     );
 };
 
-export const QuizPage: React.FC = () => {
-    const { currentUser, updateUser } = useStore();
+export const WalletPage: React.FC = () => {
+    const { currentUser, withdrawals, requestWithdraw } = useStore();
     const navigate = useNavigate();
+    const location = useLocation();
     const { showToast } = useToast();
-    const [qIndex, setQIndex] = useState(0);
+    const [activeTab, setActiveTab] = useState(location.state?.view === 'WITHDRAW_FORM' ? 'WITHDRAW' : 'HISTORY');
+    const [amount, setAmount] = useState('');
+    const [number, setNumber] = useState('');
+    const [method, setMethod] = useState<'BKASH'|'NAGAD'|'ROCKET'>('BKASH');
+    const [type, setType] = useState<'FREE_WALLET'|'PREMIUM_WALLET'>('FREE_WALLET');
 
-    const questions = [
-        { q: "What is 2+2?", a: ["3", "4", "5"], c: 1 },
-        { q: "Capital of BD?", a: ["Dhaka", "Ctg", "Sylhet"], c: 0 },
-        { q: "Color of Sky?", a: ["Green", "Blue", "Red"], c: 1 }
-    ];
+    const handleWithdraw = (e: React.FormEvent) => {
+        e.preventDefault();
+        if(!currentUser) return;
+        const val = Number(amount);
+        if(val < 100) { showToast('Minimum withdraw 100 BDT', 'error'); return; }
+        const balance = type === 'FREE_WALLET' ? currentUser.balanceFree : currentUser.balancePremium;
+        if(val > balance) { showToast('Insufficient Balance', 'error'); return; }
 
-    const handleAnswer = (idx: number) => {
-        if(idx === questions[qIndex].c) {
-             showToast("Correct!", 'success');
-             if(currentUser) {
-                 updateUser({
-                     ...currentUser,
-                     quizBalance: Math.max(0, currentUser.quizBalance - 1),
-                     balanceFree: currentUser.balanceFree + 1 // Reward
-                 });
-             }
-             if(qIndex < questions.length - 1) setQIndex(qIndex + 1);
-             else navigate('/user/free-job');
-        } else {
-            showToast("Wrong!", 'error');
-        }
-    };
+        requestWithdraw({
+        id: Date.now().toString(),
+        userId: currentUser.id,
+        amount: val,
+        method,
+        number,
+        type,
+        status: 'PENDING',
+        date: new Date().toISOString().split('T')[0]
+        });
+        showToast('Withdrawal Requested', 'success');
+        setAmount('');
+        setActiveTab('HISTORY');
+    }
+
+    if (!currentUser) return null;
 
     return (
         <UserLayout>
             <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
-                <button onClick={() => navigate('/user/free-job')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
-                <h1 className="text-lg font-bold text-gray-800">Quiz</h1>
+                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
+                <h1 className="text-lg font-bold text-gray-800">My Wallet</h1>
             </div>
-            <div className="p-5 flex flex-col items-center justify-center min-h-[60vh]">
-                 <div className="bg-white p-6 rounded-2xl shadow-lg w-full text-center">
-                     <h2 className="text-xl font-bold mb-6 text-gray-800">{questions[qIndex].q}</h2>
-                     <div className="space-y-3">
-                         {questions[qIndex].a.map((ans, i) => (
-                             <button key={i} onClick={() => handleAnswer(i)} className="w-full p-4 bg-gray-50 hover:bg-emerald-50 rounded-xl font-bold text-gray-700 text-sm transition border border-gray-100">{ans}</button>
-                         ))}
-                     </div>
-                 </div>
+
+            <div className="p-5">
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-5 text-white shadow-lg shadow-emerald-200">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-100">Free Balance</p>
+                        <h3 className="text-2xl font-black mt-1">৳{currentUser.balanceFree}</h3>
+                    </div>
+                    <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-5 text-white shadow-lg shadow-yellow-200">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-yellow-100">Premium Balance</p>
+                        <h3 className="text-2xl font-black mt-1">৳{currentUser.balancePremium}</h3>
+                    </div>
+                </div>
+
+                <div className="flex p-1 bg-gray-100 rounded-xl mb-6">
+                    <button onClick={() => setActiveTab('WITHDRAW')} className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition ${activeTab === 'WITHDRAW' ? 'bg-white shadow text-emerald-600' : 'text-gray-500'}`}>Withdraw Request</button>
+                    <button onClick={() => setActiveTab('HISTORY')} className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition ${activeTab === 'HISTORY' ? 'bg-white shadow text-emerald-600' : 'text-gray-500'}`}>History</button>
+                </div>
+
+                {activeTab === 'WITHDRAW' ? (
+                    <form onSubmit={handleWithdraw} className="space-y-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                         <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Withdraw Method</label>
+                            <div className="flex gap-2">
+                                {['BKASH', 'NAGAD', 'ROCKET'].map(m => (
+                                    <button key={m} type="button" onClick={() => setMethod(m as any)} className={`flex-1 py-3 rounded-xl text-xs font-bold border ${method === m ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-white border-gray-200 text-gray-600'}`}>
+                                        {m}
+                                    </button>
+                                ))}
+                            </div>
+                         </div>
+                         <div>
+                             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Select Wallet</label>
+                             <select value={type} onChange={e => setType(e.target.value as any)} className="w-full p-3 bg-gray-50 rounded-xl text-sm font-bold border-none outline-none">
+                                 <option value="FREE_WALLET">Free Wallet (৳{currentUser.balanceFree})</option>
+                                 <option value="PREMIUM_WALLET">Premium Wallet (৳{currentUser.balancePremium})</option>
+                             </select>
+                         </div>
+                         <div>
+                             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Amount</label>
+                             <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Min 100" className="w-full p-3 bg-gray-50 rounded-xl text-sm font-bold border-none outline-none" required />
+                         </div>
+                         <div>
+                             <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Mobile Number</label>
+                             <input type="text" value={number} onChange={e => setNumber(e.target.value)} placeholder="017..." className="w-full p-3 bg-gray-50 rounded-xl text-sm font-bold border-none outline-none" required />
+                         </div>
+                         <button type="submit" className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold text-sm shadow-lg mt-2">Submit Request</button>
+                    </form>
+                ) : (
+                    <div className="space-y-3">
+                        {withdrawals.filter(w => w.userId === currentUser.id).map(w => (
+                            <div key={w.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center">
+                                <div>
+                                    <p className="font-bold text-sm text-gray-800">{w.method} - {w.number}</p>
+                                    <p className="text-[10px] text-gray-400">{w.date}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-black text-emerald-600">৳{w.amount}</p>
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${w.status === 'APPROVED' ? 'bg-green-100 text-green-600' : w.status === 'PENDING' ? 'bg-yellow-100 text-yellow-600' : 'bg-red-100 text-red-600'}`}>{w.status}</span>
+                                </div>
+                            </div>
+                        ))}
+                        {withdrawals.filter(w => w.userId === currentUser.id).length === 0 && <p className="text-center text-gray-400 py-10">No history found.</p>}
+                    </div>
+                )}
+            </div>
+        </UserLayout>
+    );
+};
+
+export const FreeJobPage: React.FC = () => {
+    const navigate = useNavigate();
+    return (
+        <UserLayout>
+            <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
+                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
+                <h1 className="text-lg font-bold text-gray-800">Free Jobs</h1>
+            </div>
+            <div className="p-5 grid grid-cols-2 gap-4">
+                {[
+                    { title: "Task List", icon: List, color: "bg-blue-500", link: "/user/tasks" },
+                    { title: "Quiz", icon: HelpCircle, color: "bg-purple-500", link: "/user/quiz" },
+                    { title: "Work Video", icon: Video, color: "bg-red-500", link: "/user/work-video" },
+                    { title: "Daily Bonus", icon: Gift, color: "bg-yellow-500", link: "/user/home" },
+                ].map((item, i) => (
+                    <div key={i} onClick={() => navigate(item.link)} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 cursor-pointer hover:shadow-md transition">
+                        <div className={`${item.color} p-3 rounded-xl text-white shadow-lg`}>
+                            <item.icon size={24}/>
+                        </div>
+                        <h3 className="font-bold text-gray-700 text-sm">{item.title}</h3>
+                    </div>
+                ))}
             </div>
         </UserLayout>
     );
 };
 
 export const TaskListPage: React.FC = () => {
-    const { tasks } = useStore();
+    const { tasks, currentUser, submitTask, submissions } = useStore();
     const navigate = useNavigate();
-    
-    return (
-        <UserLayout>
-             <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
-                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
-                <h1 className="text-lg font-bold text-gray-800">All Tasks</h1>
-            </div>
-            <div className="p-5 space-y-4">
-                {tasks.map(t => (
-                    <div key={t.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                        <h4 className="font-bold">{t.title}</h4>
-                        <p className="text-xs text-gray-500 mb-2">{t.description}</p>
-                        <span className="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded font-bold">৳{t.amount}</span>
-                    </div>
-                ))}
-            </div>
-        </UserLayout>
-    );
-};
-
-export const NotificationsPage: React.FC = () => {
-    const { notifications, markNotificationsRead } = useStore();
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        markNotificationsRead();
-    }, []);
-
-    return (
-        <UserLayout>
-            <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
-                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
-                <h1 className="text-lg font-bold text-gray-800">Notifications</h1>
-            </div>
-            <div className="p-5 space-y-3">
-                {notifications.map(n => (
-                    <div key={n.id} className={`p-4 rounded-xl border ${n.type === 'INCOME' ? 'bg-emerald-50 border-emerald-100' : 'bg-white border-gray-100 shadow-sm'}`}>
-                        <h4 className="font-bold text-sm text-gray-800">{n.title}</h4>
-                        <p className="text-xs text-gray-500 mt-1">{n.message}</p>
-                        <p className="text-[10px] text-gray-400 mt-2 text-right">{new Date(n.date).toLocaleDateString()}</p>
-                    </div>
-                ))}
-                {notifications.length === 0 && <p className="text-center text-gray-400 py-10">No notifications.</p>}
-            </div>
-        </UserLayout>
-    );
-};
-
-export const IncomeHistoryPage: React.FC = () => {
-    const { incomeLogs } = useStore();
-    const navigate = useNavigate();
-
-    return (
-        <UserLayout>
-            <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
-                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
-                <h1 className="text-lg font-bold text-gray-800">Income History</h1>
-            </div>
-            <div className="p-5 space-y-3">
-                {incomeLogs.map(log => (
-                    <div key={log.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center">
-                         <div>
-                             <p className="font-bold text-sm text-gray-800">{log.source}</p>
-                             <p className="text-[10px] text-gray-400">{new Date(log.date).toLocaleDateString()}</p>
-                         </div>
-                         <span className="text-emerald-600 font-bold">+৳{log.amount}</span>
-                    </div>
-                ))}
-                {incomeLogs.length === 0 && <p className="text-center text-gray-400 py-10">No history found.</p>}
-            </div>
-        </UserLayout>
-    );
-};
-
-export const WorkVideoPage: React.FC = () => {
-    const navigate = useNavigate();
-    return (
-        <UserLayout>
-             <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
-                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
-                <h1 className="text-lg font-bold text-gray-800">Work Videos</h1>
-            </div>
-            <div className="p-5">
-                 <div className="bg-gray-900 rounded-xl overflow-hidden aspect-video flex items-center justify-center text-white">
-                     <PlayCircle size={48} />
-                 </div>
-                 <h3 className="font-bold mt-4 text-gray-800">How to work?</h3>
-                 <p className="text-xs text-gray-500">Watch this tutorial to learn how to earn money.</p>
-            </div>
-        </UserLayout>
-    );
-};
-
-export const JobWithdrawPage: React.FC = () => {
-    const { currentUser, submitJobWithdraw, jobWithdrawals } = useStore();
-    const navigate = useNavigate();
-    const [points, setPoints] = useState('');
-    const [wallet, setWallet] = useState('');
     const { showToast } = useToast();
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [proof, setProof] = useState('');
 
     const handleSubmit = () => {
-        const p = Number(points);
-        if(!p || !wallet) return showToast("Invalid Inputs", 'error');
+        if(!selectedTask || !currentUser) return;
+        if(!proof) { showToast("Proof link required", 'error'); return; }
         
-        submitJobWithdraw({
+        submitTask({
             id: Date.now().toString(),
-            userId: currentUser!.id,
-            jobType: 'Data Entry',
-            points: p,
-            amountBDT: p * 0.1,
-            walletNumber: wallet,
-            proofImage: '',
-            details: 'Job Withdraw',
+            userId: currentUser.id,
+            taskId: selectedTask.id,
+            taskTitle: selectedTask.title,
+            proofLink: proof,
+            details: 'User Submitted',
             status: 'PENDING',
-            date: new Date().toISOString()
+            date: new Date().toISOString().split('T')[0],
+            amount: selectedTask.amount,
         });
-        showToast("Withdraw Submitted", 'success');
-        setPoints('');
+        showToast("Task Submitted Successfully", 'success');
+        setSelectedTask(null);
+        setProof('');
     };
+
+    const availableTasks = tasks.filter(t => t.type === 'FREE'); // Showing Free tasks by default for now
 
     return (
         <UserLayout>
              <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
                 <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
-                <h1 className="text-lg font-bold text-gray-800">Job Withdraw</h1>
+                <h1 className="text-lg font-bold text-gray-800">Available Tasks</h1>
             </div>
+
             <div className="p-5 space-y-4">
-                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                     <input type="number" placeholder="Points" value={points} onChange={e => setPoints(e.target.value)} className="w-full p-3 border rounded-xl mb-3"/>
-                     <input type="text" placeholder="Wallet Number" value={wallet} onChange={e => setWallet(e.target.value)} className="w-full p-3 border rounded-xl mb-3"/>
-                     <button onClick={handleSubmit} className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold">Withdraw Points</button>
-                 </div>
-                 
-                 <div className="space-y-3">
-                     <h3 className="font-bold text-gray-700">History</h3>
-                     {jobWithdrawals.map(jw => (
-                         <div key={jw.id} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex justify-between">
-                             <div>
-                                 <p className="font-bold text-sm">Points: {jw.points}</p>
-                                 <p className="text-xs text-gray-500">{jw.date}</p>
+                {availableTasks.map(task => (
+                    <div key={task.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
+                        <div className="flex gap-4">
+                            <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                <img src={task.image || `https://placehold.co/100?text=Task`} className="w-full h-full object-cover"/>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-gray-800 line-clamp-1">{task.title}</h3>
+                                <p className="text-xs text-gray-500 line-clamp-2 mt-1">{task.description}</p>
+                                <div className="flex items-center justify-between mt-3">
+                                    <span className="font-black text-emerald-600">৳{task.amount}</span>
+                                    <button onClick={() => setSelectedTask(task)} className="bg-slate-900 text-white px-4 py-1.5 rounded-lg text-xs font-bold">Start Task</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                {availableTasks.length === 0 && <p className="text-center text-gray-400 py-10">No tasks available currently.</p>}
+            </div>
+
+            <AnimatePresence>
+                {selectedTask && (
+                    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center pointer-events-none">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto" onClick={() => setSelectedTask(null)}/>
+                        <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 relative z-10 pointer-events-auto max-h-[90vh] overflow-y-auto">
+                            <button onClick={() => setSelectedTask(null)} className="absolute top-4 right-4 bg-gray-100 p-2 rounded-full"><X size={20}/></button>
+                            
+                            <h2 className="text-xl font-bold text-gray-900 pr-10">{selectedTask.title}</h2>
+                            <p className="text-emerald-600 font-bold text-lg mt-1">Reward: ৳{selectedTask.amount}</p>
+                            
+                            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 my-4">
+                                <p className="text-xs font-bold text-blue-800 uppercase mb-1">Instructions:</p>
+                                <p className="text-sm text-blue-900 leading-relaxed">{selectedTask.description}</p>
+                            </div>
+
+                            <a href={selectedTask.link} target="_blank" rel="noreferrer" className="block w-full bg-emerald-100 text-emerald-700 text-center py-3 rounded-xl font-bold mb-4 border border-emerald-200 hover:bg-emerald-200 transition">
+                                Open Task Link
+                            </a>
+
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-gray-700">Submit Proof</label>
+                                <input type="text" placeholder="Paste proof link / screenshot URL" value={proof} onChange={e => setProof(e.target.value)} className="w-full p-3 bg-gray-50 rounded-xl border-none outline-none text-sm"/>
+                                <button onClick={handleSubmit} className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold shadow-lg">Submit for Review</button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </UserLayout>
+    );
+};
+
+export const PremiumPage: React.FC = () => {
+    const { settings, currentUser } = useStore();
+    const navigate = useNavigate();
+
+    return (
+        <UserLayout>
+            <div className="bg-slate-900 min-h-screen text-white pb-20">
+                <div className="p-6">
+                    <button onClick={() => navigate('/user/home')} className="bg-white/10 p-2 rounded-full mb-4"><ArrowLeft size={20}/></button>
+                    <h1 className="text-3xl font-black mb-2 text-yellow-400">Premium <br/> Membership</h1>
+                    <p className="text-slate-400 text-sm">Unlock exclusive benefits and higher earnings.</p>
+                </div>
+
+                <div className="bg-white rounded-t-[2.5rem] p-6 text-slate-900 min-h-[70vh]">
+                     <div className="bg-gradient-to-br from-yellow-100 to-orange-100 p-6 rounded-3xl border border-yellow-200 mb-8 text-center relative overflow-hidden">
+                         <Crown size={100} className="absolute -top-4 -right-4 text-yellow-500/20"/>
+                         <h2 className="text-4xl font-black text-yellow-600 mb-2">৳{settings.premiumCost}</h2>
+                         <p className="text-sm font-bold text-yellow-700 uppercase tracking-widest">Lifetime Access</p>
+                     </div>
+
+                     <div className="space-y-4 mb-8">
+                         {[
+                             "Unlimited Daily Tasks",
+                             "Higher Task Rewards",
+                             "Instant Withdrawals",
+                             "24/7 Priority Support",
+                             "Access to Premium Group",
+                             "Referral Bonuses"
+                         ].map((feat, i) => (
+                             <div key={i} className="flex items-center gap-3">
+                                 <div className="bg-emerald-100 p-1 rounded-full"><CheckCircle size={16} className="text-emerald-600"/></div>
+                                 <span className="font-bold text-gray-700">{feat}</span>
                              </div>
-                             <span className={`text-xs font-bold px-2 py-1 rounded h-fit ${jw.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{jw.status}</span>
+                         ))}
+                     </div>
+
+                     {currentUser?.status === 'PREMIUM' ? (
+                         <div className="bg-emerald-600 text-white p-4 rounded-xl font-bold text-center">
+                             You are already a Premium Member
                          </div>
-                     ))}
-                 </div>
+                     ) : (
+                        <button onClick={() => navigate('/user/premium-form')} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold shadow-xl flex items-center justify-center gap-2 text-lg animate-pulse">
+                            Upgrade Now <ArrowRight size={20}/>
+                        </button>
+                     )}
+                </div>
             </div>
         </UserLayout>
     );
@@ -1183,45 +754,327 @@ export const PremiumFormPage: React.FC = () => {
     const { showToast } = useToast();
     const [form, setForm] = useState({ method: 'BKASH', sender: '', trx: '' });
 
-    const handleSubmit = () => {
-        if(!form.sender || !form.trx) return showToast("Fill all fields", 'error');
-        
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if(!currentUser) return;
         requestPremium({
             id: Date.now().toString(),
-            userId: currentUser!.id,
+            userId: currentUser.id,
             method: form.method,
             senderNumber: form.sender,
             trxId: form.trx,
             amount: settings.premiumCost,
             status: 'PENDING',
-            date: new Date().toISOString()
+            date: new Date().toISOString().split('T')[0]
         });
-        showToast("Request Sent", 'success');
-        navigate('/user/premium');
+        showToast("Request Sent! Wait for approval.", 'success');
+        navigate('/user/home');
     };
 
     return (
         <UserLayout>
-            <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
+             <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
                 <button onClick={() => navigate('/user/premium')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
-                <h1 className="text-lg font-bold text-gray-800">Upgrade Premium</h1>
+                <h1 className="text-lg font-bold text-gray-800">Buy Premium</h1>
             </div>
-            <div className="p-5">
-                 <div className="bg-white p-6 rounded-2xl shadow-lg border border-yellow-100 mb-6 text-center">
-                     <p className="text-sm font-bold text-gray-500 uppercase">Send Money To</p>
-                     <h2 className="text-2xl font-black text-gray-900 my-2">{settings.contactNumber}</h2>
-                     <p className="text-emerald-600 font-bold">Amount: ৳{settings.premiumCost}</p>
+            
+            <div className="p-6">
+                <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-xl mb-6">
+                    <p className="text-sm text-yellow-800 font-bold mb-2">Instructions:</p>
+                    <p className="text-xs text-yellow-700 leading-relaxed">
+                        Send <b>৳{settings.premiumCost}</b> to the number below using Send Money. Then fill the form.
+                    </p>
+                    <div className="bg-white p-3 rounded-lg mt-3 flex justify-between items-center border border-yellow-100">
+                        <span className="font-mono font-bold text-lg text-gray-800">{settings.contactNumber}</span>
+                        <Copy size={18} className="text-yellow-600 cursor-pointer" onClick={() => {navigator.clipboard.writeText(settings.contactNumber); showToast("Copied!", 'success')}}/>
+                    </div>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                     <div>
+                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Payment Method</label>
+                         <select value={form.method} onChange={e => setForm({...form, method: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl font-bold outline-none">
+                             <option value="BKASH">Bkash</option>
+                             <option value="NAGAD">Nagad</option>
+                             <option value="ROCKET">Rocket</option>
+                         </select>
+                     </div>
+                     <div>
+                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Sender Number</label>
+                         <input type="text" placeholder="017..." value={form.sender} onChange={e => setForm({...form, sender: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl font-bold outline-none" required/>
+                     </div>
+                     <div>
+                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Transaction ID</label>
+                         <input type="text" placeholder="X7Y..." value={form.trx} onChange={e => setForm({...form, trx: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl font-bold outline-none" required/>
+                     </div>
+                     <button type="submit" className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold shadow-lg mt-2">Submit Payment</button>
+                </form>
+            </div>
+        </UserLayout>
+    );
+};
+
+export const QuizPage: React.FC = () => {
+    const { currentUser, updateUser, settings } = useStore();
+    const navigate = useNavigate();
+    const { showToast } = useToast();
+    const [answer, setAnswer] = useState('');
+    const [q, setQ] = useState({ a: 0, b: 0 });
+
+    useEffect(() => {
+        genQuiz();
+    }, []);
+
+    const genQuiz = () => {
+        setQ({ a: Math.floor(Math.random() * 10), b: Math.floor(Math.random() * 10) });
+    };
+
+    const handleSubmit = () => {
+        if(!currentUser) return;
+        if(currentUser.quizBalance <= 0) {
+            showToast("No Quiz Balance remaining!", 'error');
+            return;
+        }
+        if(parseInt(answer) === q.a + q.b) {
+            updateUser({
+                ...currentUser,
+                quizBalance: currentUser.quizBalance - 1,
+                balanceFree: currentUser.balanceFree + settings.quizReward
+            });
+            showToast(`Correct! Earned ৳${settings.quizReward}`, 'success');
+            setAnswer('');
+            genQuiz();
+        } else {
+            showToast("Wrong Answer!", 'error');
+        }
+    };
+
+    if(!currentUser) return null;
+
+    return (
+        <UserLayout>
+             <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
+                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
+                <h1 className="text-lg font-bold text-gray-800">Math Quiz</h1>
+            </div>
+            <div className="p-6 text-center">
+                <div className="bg-purple-100 p-4 rounded-xl mb-6 inline-block">
+                    <p className="text-xs text-purple-700 font-bold uppercase">Remaining Quizzes</p>
+                    <h3 className="text-3xl font-black text-purple-800">{currentUser.quizBalance}</h3>
+                </div>
+                
+                <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 mb-6">
+                    <p className="text-4xl font-bold text-gray-800 mb-6">{q.a} + {q.b} = ?</p>
+                    <input type="number" value={answer} onChange={e => setAnswer(e.target.value)} placeholder="Answer" className="w-full p-4 bg-gray-50 rounded-xl text-center text-xl font-bold outline-none mb-4"/>
+                    <button onClick={handleSubmit} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold shadow-lg">Submit Answer</button>
+                </div>
+            </div>
+        </UserLayout>
+    );
+};
+
+export const UserProfilePage: React.FC = () => {
+    const { currentUser, logout, updateUser } = useStore();
+    const navigate = useNavigate();
+    const { showToast } = useToast();
+    const [pass, setPass] = useState('');
+
+    const handleUpdate = () => {
+        if(!currentUser) return;
+        if(pass) {
+            updateUser({ ...currentUser, password: pass });
+            showToast("Password Updated", 'success');
+            setPass('');
+        }
+    };
+
+    if(!currentUser) return null;
+
+    return (
+        <UserLayout>
+            <div className="p-6 pt-10">
+                <div className="text-center mb-8">
+                     <div className="w-24 h-24 mx-auto bg-white rounded-full p-1 shadow-lg mb-4">
+                         <img src={currentUser.profilePic || `https://ui-avatars.com/api/?name=${currentUser.name}`} className="w-full h-full rounded-full object-cover"/>
+                     </div>
+                     <h2 className="text-2xl font-black text-gray-800">{currentUser.name}</h2>
+                     <p className="text-gray-500 font-bold">{currentUser.phone}</p>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                    <h3 className="font-bold text-gray-800 border-b pb-2">Account Settings</h3>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 uppercase">Change Password</label>
+                        <input type="password" placeholder="New Password" value={pass} onChange={e => setPass(e.target.value)} className="w-full p-3 bg-gray-50 rounded-xl mt-1 outline-none"/>
+                    </div>
+                    <button onClick={handleUpdate} className="bg-slate-900 text-white px-6 py-2 rounded-lg text-sm font-bold">Update Profile</button>
+                </div>
+
+                <button onClick={() => { logout(); navigate('/login'); }} className="w-full mt-6 bg-red-50 text-red-600 py-4 rounded-xl font-bold flex items-center justify-center gap-2">
+                    <LogOut size={20}/> Logout
+                </button>
+            </div>
+        </UserLayout>
+    );
+};
+
+export const NotificationsPage: React.FC = () => {
+    const { notifications, currentUser, markNotificationsRead } = useStore();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        markNotificationsRead();
+    }, []);
+
+    const myNotifs = notifications.filter(n => n.userId === currentUser?.id || !n.userId);
+
+    return (
+        <UserLayout>
+            <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
+                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
+                <h1 className="text-lg font-bold text-gray-800">Notifications</h1>
+            </div>
+            <div className="p-4 space-y-3">
+                {myNotifs.map(n => (
+                    <div key={n.id} className={`p-4 rounded-xl border ${n.type === 'INCOME' ? 'bg-emerald-50 border-emerald-100' : 'bg-white border-gray-100'}`}>
+                        <div className="flex gap-3">
+                            <div className={`mt-1 ${n.type === 'INCOME' ? 'text-emerald-600' : 'text-gray-600'}`}>
+                                {n.type === 'INCOME' ? <DollarSign size={20}/> : <Bell size={20}/>}
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-sm text-gray-800">{n.title}</h4>
+                                <p className="text-xs text-gray-500 mt-1 leading-relaxed">{n.message}</p>
+                                <p className="text-[10px] text-gray-400 mt-2">{new Date(n.date).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                {myNotifs.length === 0 && <p className="text-center text-gray-400 py-10">No notifications.</p>}
+            </div>
+        </UserLayout>
+    );
+};
+
+export const IncomeHistoryPage: React.FC = () => {
+    const { incomeLogs, currentUser } = useStore();
+    const navigate = useNavigate();
+    const myLogs = incomeLogs.filter(l => l.userId === currentUser?.id);
+
+    return (
+        <UserLayout>
+             <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
+                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
+                <h1 className="text-lg font-bold text-gray-800">Income History</h1>
+            </div>
+            <div className="p-4 space-y-3">
+                {myLogs.map(log => (
+                    <div key={log.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <p className="font-bold text-sm text-gray-800">{log.source}</p>
+                            <p className="text-[10px] text-gray-400">{new Date(log.date).toLocaleDateString()}</p>
+                        </div>
+                        <span className="font-black text-emerald-600">+৳{log.amount}</span>
+                    </div>
+                ))}
+                 {myLogs.length === 0 && <p className="text-center text-gray-400 py-10">No history available.</p>}
+            </div>
+        </UserLayout>
+    );
+};
+
+export const WorkVideoPage: React.FC = () => {
+    const { settings } = useStore();
+    const navigate = useNavigate();
+
+    return (
+         <UserLayout>
+             <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
+                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
+                <h1 className="text-lg font-bold text-gray-800">Work Video</h1>
+            </div>
+            <div className="p-6">
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <h3 className="font-bold text-center mb-4 text-gray-800">How to Work Tutorial</h3>
+                    <div className="aspect-video bg-gray-200 rounded-xl flex items-center justify-center">
+                         <a href={settings.youtubeLink} target="_blank" rel="noreferrer" className="flex flex-col items-center gap-2">
+                             <Youtube size={48} className="text-red-600"/>
+                             <span className="text-sm font-bold text-gray-600">Watch on YouTube</span>
+                         </a>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-4 text-center">Watch the full video to understand how to complete tasks and withdraw money.</p>
+                </div>
+            </div>
+         </UserLayout>
+    );
+};
+
+export const JobWithdrawPage: React.FC = () => {
+    const { currentUser, submitJobWithdraw, settings } = useStore();
+    const navigate = useNavigate();
+    const { showToast } = useToast();
+    const [form, setForm] = useState({ type: 'Data Entry', points: '', wallet: '', proof: '' });
+
+    const handleSubmit = () => {
+        if(!currentUser) return;
+        const pts = Number(form.points);
+        if(!pts || pts <= 0) { showToast("Invalid Points", 'error'); return; }
+        
+        const amount = pts * settings.jobPointRate;
+        
+        submitJobWithdraw({
+            id: Date.now().toString(),
+            userId: currentUser.id,
+            jobType: form.type,
+            points: pts,
+            amountBDT: amount,
+            walletNumber: form.wallet,
+            proofImage: form.proof,
+            details: 'Job Withdrawal',
+            status: 'PENDING',
+            date: new Date().toISOString().split('T')[0]
+        });
+        showToast("Job Withdraw Submitted", 'success');
+        navigate('/user/home');
+    };
+
+    return (
+        <UserLayout>
+             <div className="bg-white p-4 shadow-sm flex items-center gap-3 sticky top-0 z-50">
+                <button onClick={() => navigate('/user/home')} className="p-2 hover:bg-gray-100 rounded-full"><ArrowLeft size={20} className="text-gray-800"/></button>
+                <h1 className="text-lg font-bold text-gray-800">Job Withdraw</h1>
+            </div>
+            <div className="p-6">
+                 <div className="bg-orange-50 p-4 rounded-xl border border-orange-200 mb-6">
+                     <p className="text-xs text-orange-800 font-bold">Conversion Rate: 1000 Points = ৳{1000 * settings.jobPointRate}</p>
                  </div>
 
                  <div className="space-y-4">
-                     <select value={form.method} onChange={e => setForm({...form, method: e.target.value})} className="w-full p-4 border rounded-xl bg-white">
-                         <option value="BKASH">Bkash</option>
-                         <option value="NAGAD">Nagad</option>
-                         <option value="ROCKET">Rocket</option>
-                     </select>
-                     <input type="text" placeholder="Sender Number" value={form.sender} onChange={e => setForm({...form, sender: e.target.value})} className="w-full p-4 border rounded-xl"/>
-                     <input type="text" placeholder="Transaction ID" value={form.trx} onChange={e => setForm({...form, trx: e.target.value})} className="w-full p-4 border rounded-xl"/>
-                     <button onClick={handleSubmit} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold shadow-lg">Submit Payment</button>
+                     <div>
+                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Job Type</label>
+                         <select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="w-full p-3 bg-white rounded-xl border border-gray-200">
+                             <option>Data Entry</option>
+                             <option>Captcha Entry</option>
+                             <option>Ad View</option>
+                         </select>
+                     </div>
+                     <div>
+                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Points Earned</label>
+                         <input type="number" value={form.points} onChange={e => setForm({...form, points: e.target.value})} className="w-full p-3 bg-white rounded-xl border border-gray-200" placeholder="e.g. 5000"/>
+                     </div>
+                     <div>
+                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Your Wallet Number</label>
+                         <input type="text" value={form.wallet} onChange={e => setForm({...form, wallet: e.target.value})} className="w-full p-3 bg-white rounded-xl border border-gray-200" placeholder="017..."/>
+                     </div>
+                     <div>
+                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Proof Image Link</label>
+                         <input type="text" value={form.proof} onChange={e => setForm({...form, proof: e.target.value})} className="w-full p-3 bg-white rounded-xl border border-gray-200" placeholder="http://..."/>
+                     </div>
+                     <div className="pt-2">
+                        <p className="text-right font-black text-lg text-emerald-600 mb-2">
+                            Receive: ৳{(Number(form.points) * settings.jobPointRate).toFixed(2)}
+                        </p>
+                        <button onClick={handleSubmit} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold shadow-lg">Submit Request</button>
+                     </div>
                  </div>
             </div>
         </UserLayout>

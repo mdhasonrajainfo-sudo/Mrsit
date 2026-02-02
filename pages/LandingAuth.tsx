@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Menu, X, Smartphone, UserPlus, FileText, HelpCircle, 
@@ -431,9 +431,19 @@ export const LoginPage: React.FC = () => {
 export const RegisterPage: React.FC = () => {
   const { register, settings, users } = useStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', password: '', refCode: '' });
   const [refName, setRefName] = useState<string | null>(null);
   const [isValidRef, setIsValidRef] = useState(false);
+
+  // Auto-fill Ref Code from URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const refParam = params.get('ref');
+    if (refParam) {
+        setFormData(prev => ({ ...prev, refCode: refParam }));
+    }
+  }, [location]);
 
   // Dynamic Referral Lookup
   useEffect(() => {
@@ -506,6 +516,7 @@ export const RegisterPage: React.FC = () => {
           <input 
             type="text" 
             placeholder="Referral Code (Required)" 
+            value={formData.refCode}
             onChange={e => setFormData({...formData, refCode: e.target.value})} 
             className={`w-full p-4 pl-12 border-2 bg-white rounded-2xl shadow-sm outline-none font-medium text-gray-900 transition ${formData.refCode.length > 0 ? (isValidRef ? 'border-emerald-500' : 'border-red-500') : 'border-transparent'}`}
             required 
